@@ -1,33 +1,31 @@
 #!/usr/bin/python3
-"""index.py to connect to API"""
+'''Contains the index view for the API.'''
 from api.v1.views import app_views
-from flask import Flask, Blueprint, jsonify
+from flask import jsonify
 from models import storage
+from models.state import State
+from models.city import City
+from models.user import User
+from models.place import Place
+from models.review import Review
+from models.amenity import Amenity
 
 
-hbnbText = {
-    "amenities": "Amenity",
-    "cities": "City",
-    "places": "Place",
-    "reviews": "Review",
-    "states": "State",
-    "users": "User"
-}
-
-
-@app_views.route('/status', strict_slashes=False)
-def hbnbStatus():
-    """hbnbStatus"""
+@app_views.route('/status', methods=['GET'], strict_slashes=False)
+def status():
+    """Returns a JSON response with status OK."""
     return jsonify({"status": "OK"})
 
 
-@app_views.route('/stats', strict_slashes=False)
-def hbnbStats():
-    """hbnbStats"""
-    return_dict = {}
-    for key, value in hbnbText.items():
-        return_dict[key] = storage.count(value)
-    return jsonify(return_dict)
-
-if __name__ == "__main__":
-    pass
+@app_views.route('/stats', methods=['GET'], strict_slashes=False)
+def get_stats():
+    """Retrieves the number of each object type"""
+    stats = {
+        'states': storage.count(State),
+        'cities': storage.count(City),
+        'users': storage.count(User),
+        'places': storage.count(Place),
+        'reviews': storage.count(Review),
+        'amenities': storage.count(Amenity),
+    }
+    return jsonify(stats)
