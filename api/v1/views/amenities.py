@@ -16,7 +16,7 @@ def get_amenities():
 @app_views.route("/amenities", methods=["POST"], strict_slashes=False)
 def create_amenity():
     """Creates an Amenity"""
-    data = request.get_json()
+    data = request.get_json(silent=True)
     if data is None:
         abort(400, 'Not a JSON')
     if 'name' not in data:
