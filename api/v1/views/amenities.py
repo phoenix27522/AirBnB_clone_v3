@@ -46,7 +46,9 @@ def create_amenity():
         abort(400, 'Missing name')
 
     new_amenity = Amenity(**data)
-    new_amenity.save()
+    storage.new(new_amenity)
+    storage.save()
+
     return jsonify(new_amenity.to_dict()), 201
 
 
@@ -54,7 +56,7 @@ def create_amenity():
                  methods=['PUT'], strict_slashes=False)
 def update_amenity(amenity_id):
     """Updates an Amenity object"""
-    amenity = storage.get(Amenity, amenity_id)
+    amenity = storage.get("Amenity", str(amenity_id))
     if amenity is None:
         abort(404)
 
@@ -68,4 +70,4 @@ def update_amenity(amenity_id):
             setattr(amenity, key, value)
 
     storage.save()
-    return jsonify(amenity.to_dict()), 200
+    return jsonify(amenity.to_dict())
