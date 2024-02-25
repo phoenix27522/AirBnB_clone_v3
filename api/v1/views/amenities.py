@@ -7,13 +7,11 @@ from api.v1.views import app_views
 
 
 @app_views.route('/amenities', methods=['GET'], strict_slashes=False)
-def amenity_get_all():
-    """retrieves all Amenity objects"""
-    data = []
-    objs = storage.all("Amenity")
-    for obj in objs.values():
-        data.append(obj.to_dict())
-    return jsonify(data)
+def get_amenities():
+    """Retrieves the list of all Amenity objects"""
+    amenities = [amenity.to_dict()
+                 for amenity in storage.all(Amenity).values()]
+    return jsonify(amenities)
 
 
 @app_views.route('/amenities/<amenity_id>',
@@ -71,5 +69,5 @@ def update_amenity(amenity_id):
         if key not in ignore_keys:
             setattr(amenity, key, value)
 
-    storage.save()
+    amenity.save()
     return jsonify(amenity.to_dict())
