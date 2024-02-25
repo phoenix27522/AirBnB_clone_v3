@@ -1,4 +1,7 @@
 #!/usr/bin/python3
+"""
+route for handling State objects and operations
+"""
 from flask import Flask, jsonify, request, abort
 from models import storage
 from models.state import State
