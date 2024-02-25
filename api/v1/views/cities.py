@@ -8,15 +8,19 @@ from models.state import State
 from api.v1.views import app_views
 
 
-@app_views.route('/states/<state_id>/cities',
-                 methods=['GET'], strict_slashes=False)
-def get_cities(state_id):
-    """Retrieves the list of all City objects of a State"""
-    state = storage.get(State, state_id)
-    if state is None:
+@app_views.route("/states/<state_id>/cities", methods=["GET"],
+                 strict_slashes=False)
+def city_by_state(state_id):
+    """retrieves all City objects from a specific state
+    Args:
+        state_id: state id"""
+    list_of_cities = []
+    objs = storage.get("State", str(state_id))
+    if objs is None:
         abort(404)
-    cities = [city.to_dict() for city in state.cities]
-    return jsonify(cities)
+    for obj in objs.cities:
+        list_of_cities.append(obj.to_dict())
+    return jsonify(list_of_cities)
 
 
 @app_views.route('/cities/<city_id>', methods=['GET'], strict_slashes=False)
