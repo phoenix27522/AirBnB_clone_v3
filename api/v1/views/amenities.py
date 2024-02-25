@@ -14,18 +14,19 @@ def get_amenities():
 
 
 @app_views.route("/amenities", methods=["POST"], strict_slashes=False)
-def amenity_create():
-    """create amenity route"""
-    json_ems = request.get_json(silent=True)
-    if json_ems is None:
+def create_amenity():
+    """Creates an Amenity"""
+    data = request.get_json()
+    if data is None:
         abort(400, 'Not a JSON')
-    if "name" not in json_ems:
+    if 'name' not in data:
         abort(400, 'Missing name')
-    new_amenity = Amenity(**json_ems)
-    new_amenity.save()
-    response = jsonify(new_amenity.to_dict())
-    response.status_code = 201
-    return response
+
+    new_amenity = Amenity(**data)
+    storage.new(new_amenity)
+    storage.save()
+
+    return jsonify(new_amenity.to_dict()), 201
 
 
 @app_views.route("/amenities/<amenity_id>",  methods=["GET"],
