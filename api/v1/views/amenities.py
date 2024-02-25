@@ -41,21 +41,23 @@ def get_amenity(amenity_id):
 
 @app_views.route("/amenities/<amenity_id>",  methods=["PUT"],
                  strict_slashes=False)
-def amenity_put(amenity_id):
-    """updates specific Amenity object by ID
-    Args:
-        amenity_id: amenity object ID"""
-    json_ems = request.get_json(silent=True)
-    if json_ems is None:
-        abort(400, 'Not a JSON')
-    objs = storage.get("Amenity", str(amenity_id))
-    if objs is None:
+def update_amenity(amenity_id):
+    """Updates an Amenity object"""
+    amenity = storage.get(Amenity, amenity_id)
+    if amenity is None:
         abort(404)
-    for key, val in json_ems.items():
-        if key not in ["id", "created_at", "updated_at"]:
-            setattr(objs, key, val)
-    objs.save()
-    return jsonify(objs.to_dict())
+
+    data = request.get_json()
+    if data is None:
+        abort(400, 'Not a JSON')
+
+    ignore_keys = ['id', 'created_at', 'updated_at']
+    for key, value in data.items():
+        if key not in ignore_keys:
+            setattr(amenity, key, value)
+
+    storage.save()
+    return jsonify(amenity.to_dict()), 200
 
 
 @app_views.route("/amenities/<amenity_id>",  methods=["DELETE"],
