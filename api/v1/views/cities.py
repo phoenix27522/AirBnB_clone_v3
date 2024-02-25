@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 """Script that handls City objects"""
-# api/v1/views/cities.py
 from flask import Flask, jsonify, request, abort
 from models import storage
 from models.city import City
