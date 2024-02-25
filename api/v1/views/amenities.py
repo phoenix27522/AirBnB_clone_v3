@@ -47,7 +47,7 @@ def update_amenity(amenity_id):
     if amenity is None:
         abort(404)
 
-    data = request.get_json()
+    data = request.get_json(silent=True)
     if data is None:
         abort(400, 'Not a JSON')
 
@@ -62,13 +62,11 @@ def update_amenity(amenity_id):
 
 @app_views.route("/amenities/<amenity_id>",  methods=["DELETE"],
                  strict_slashes=False)
-def amenity_delete_by_id(amenity_id):
-    """deletes Amenity by id
-    Args:
-        amenity_id: Amenity object id"""
-    objs = storage.get("Amenity", str(amenity_id))
-    if objs is None:
+def delete_amenity(amenity_id):
+    """Deletes an Amenity object"""
+    amenity = storage.get(Amenity, amenity_id)
+    if amenity is None:
         abort(404)
-    storage.delete(objs)
+    storage.delete(amenity)
     storage.save()
     return jsonify({})
