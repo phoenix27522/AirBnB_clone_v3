@@ -71,19 +71,20 @@ class FileStorage:
         self.reload()
 
     def get(self, cls, id):
-        """"""
-        key = "{}.{}".format(cls.__name__, id)
-        return self.__objects.get(key, None)
+        """returns object with id
+        Args:
+            cls: class to get its specific instance
+            id: id of object to get
+        Return: None on failure. object with id"""
+        classes = self.all(cls)
+        for obj in classes.values():
+            if id == str(obj.id):
+                return obj
+        return None
 
     def count(self, cls=None):
-        """"""
-        if cls:
-            count = 0
-            for key in self.__objects:
-                partition = key.replace('.', ' ')
-                partition = shlex.split(partition)
-                if partition[0] == cls.__name__:
-                    count += 1
-            return count
-        else:
-            return len(self.__objects)
+        """counts instance of a class
+        Args:
+            cls: class to count its instances
+        Return: number of instances of cls"""
+        return len(self.all(cls))
