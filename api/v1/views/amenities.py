@@ -31,14 +31,12 @@ def create_amenity():
 
 @app_views.route("/amenities/<amenity_id>",  methods=["GET"],
                  strict_slashes=False)
-def amenity_by_id(amenity_id):
-    """gets a specific Amenity object by ID
-    Args:
-        amenity_id: amenity object id"""
-    objs = storage.get("Amenity", str(amenity_id))
-    if objs is None:
+def get_amenity(amenity_id):
+    """Retrieves an Amenity object"""
+    amenity = storage.get(Amenity, amenity_id)
+    if amenity is None:
         abort(404)
-    return jsonify(objs.to_dict())
+    return jsonify(amenity.to_dict())
 
 
 @app_views.route("/amenities/<amenity_id>",  methods=["PUT"],
