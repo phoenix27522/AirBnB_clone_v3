@@ -1,17 +1,15 @@
 #!/usr/bin/python3
-"""
-route for handling State objects and operations
-"""
+"""states"""
 from flask import Flask, jsonify, request, abort
 from models import storage
 from models.state import State
 from api.v1.views import app_views
-import json
+
 
 @app_views.route('/states', methods=['GET'], strict_slashes=False)
 def get_states():
     """Retrieves the list of all State objects"""
-    states = [obj.to_dict() for obj in storage.all(State).values()]
+    states = [state.to_dict() for state in storage.all(State).values()]
     return jsonify(states)
 
 
@@ -31,7 +29,7 @@ def delete_state(state_id):
     state = storage.get(State, state_id)
     if state is None:
         abort(404)
-    state.delete()
+    storage.delete(state)
     storage.save()
     return jsonify({})
 
@@ -42,12 +40,13 @@ def create_state():
     data = request.get_json()
     if data is None:
         abort(400, 'Not a JSON')
-    name = data.get("name")
-    if not name:
+    if 'name' not in data:
         abort(400, 'Missing name')
 
-    new_state = State(name=name)
-    new_state.save()
+    new_state = State(**data)
+    storage.new(new_state)
+    storage.save()
+
     return jsonify(new_state.to_dict()), 201
 
 
