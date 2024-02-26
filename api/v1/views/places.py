@@ -1,8 +1,7 @@
 #!/usr/bin/python3
-"""handels places"""
-from flask import jsonify, request, abort
-from models import storage
-from models.place import Place
+'''Contains the places view for the API.'''
+from flask import abort, jsonify, make_response, request
+import requests
 from api.v1.views import app_views
 from api.v1.views.amenities import amenities
 from api.v1.views.places_amenities import place_amenities
@@ -14,86 +13,84 @@ from models.state import State
 from models.user import User
 import json
 from os import getenv
-import requests
 
 
-@app_views.route('/cities/<city_id>/places',
+@app_views.route('cities/<city_id>/places',
                  methods=['GET'], strict_slashes=False)
-def get_places(city_id):
+def place(city_id):
     """Retrieves the list of all Place objects of a City"""
-    city = storage.get("City", str(city_id))
-    if city is None:
+    obj_city = storage.get(City, city_id)
+    if not obj_city:
         abort(404)
-    places = [place.to_dict() for place in city.places]
-    return jsonify(places)
+
+    return jsonify([obj.to_dict() for obj in obj_city.places])
 
 
 @app_views.route('/places/<place_id>', methods=['GET'], strict_slashes=False)
-def get_place(place_id):
+def single_place(place_id):
     """Retrieves a Place object"""
-    place = storage.get(Place, place_id)
-    if place is None:
+    obj = storage.get(Place, place_id)
+    if not obj:
         abort(404)
-    return jsonify(place.to_dict())
+    return jsonify(obj.to_dict())
 
 
 @app_views.route('/places/<place_id>',
                  methods=['DELETE'], strict_slashes=False)
-def delete_place(place_id):
-    """Deletes a Place object"""
-    place = storage.get(Place, place_id)
-    if place is None:
+def del_place(place_id):
+    """Returns an empty dictionary with the status code 200"""
+    obj = storage.get(Place, place_id)
+    if not obj:
         abort(404)
-    storage.delete(place)
+    obj.delete()
     storage.save()
-    return jsonify({})
+    return make_response(jsonify({}), 200)
 
 
-@app_views.route('/cities/<city_id>/places',
+@app_views.route('cities/<city_id>/places',
                  methods=['POST'], strict_slashes=False)
-def create_place(city_id):
-    """Creates a Place"""
-    city = storage.get("City", str(city_id))
-    if city is None:
+def post_place(city_id):
+    """Returns the new Place with the status code 201"""
+    obj_city = storage.get(City, city_id)
+    if not obj_city:
         abort(404)
 
-    data = request.get_json(silent=True)
-    if data is None:
+    new_place = request.get_json()
+    if not new_place:
         abort(400, 'Not a JSON')
-    if 'user_id' not in data:
-        abort(400, 'Missing user_id')
-    if 'name' not in data:
-        abort(400, 'Missing name')
-
-    user = storage.get("User", str(data['user_id']))
-    if user is None:
+    if 'user_id' not in new_place:
+        abort(400, "Missing user_id")
+    user_id = new_place['user_id']
+    obj_user = storage.get(User, user_id)
+    if not obj_user:
         abort(404)
+    if 'name' not in new_place:
+        abort(400, "Missing name")
 
-    new_place = Place(city_id=city_id, **data)
-    storage.new(new_place)
+    obj = Place(**new_place)
+    setattr(obj, 'city_id', city_id)
+    storage.new(obj)
     storage.save()
-
-    return jsonify(new_place.to_dict()), 201
+    return make_response(jsonify(obj.to_dict()), 201)
 
 
 @app_views.route('/places/<place_id>', methods=['PUT'], strict_slashes=False)
-def update_place(place_id):
-    """Updates a Place object"""
-    place = storage.get(Place, place_id)
-    if place is None:
+def put_place(place_id):
+    """Returns the Place object with the status code 200"""
+    obj = storage.get(Place, place_id)
+    if not obj:
         abort(404)
 
-    data = request.get_json(silent=True)
-    if data is None:
-        abort(400, 'Not a JSON')
+    req = request.get_json()
+    if not req:
+        abort(400, "Not a JSON")
 
-    ignore_keys = ['id', 'user_id', 'city_id', 'created_at', 'updated_at']
-    for key, value in data.items():
-        if key not in ignore_keys:
-            setattr(place, key, value)
+    for k, v in req.items():
+        if k not in ['id', 'user_id', 'city_id', 'created_at', 'updated_at']:
+            setattr(obj, k, v)
 
     storage.save()
-    return jsonify(place.to_dict()), 200
+    return make_response(jsonify(obj.to_dict()), 200)
 
 
 @app_views.route('/places_search', methods=['POST'], strict_slashes=False)
