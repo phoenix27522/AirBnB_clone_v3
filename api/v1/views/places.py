@@ -103,7 +103,7 @@ def places_search():
         obj_places = storage.all(Place)
         return jsonify([obj.to_dict() for obj in obj_places.values()])
 
-    places = set()
+    places = []
 
     if req.get('states'):
         obj_states = [storage.get(State, state_id)
