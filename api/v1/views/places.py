@@ -4,6 +4,11 @@ from flask import jsonify, request, abort
 from models import storage
 from models.place import Place
 from api.v1.views import app_views
+from models.amenity import Amenity
+from models.city import City
+from models.place import Place
+from models.state import State
+from models.user import User
 
 
 @app_views.route('/cities/<city_id>/places',
@@ -83,3 +88,41 @@ def update_place(place_id):
 
     storage.save()
     return jsonify(place.to_dict()), 200
+
+
+@app_views.route('/places_search', methods=['POST'], strict_slashes=False)
+def places_search():
+    """
+    Retrieves all Place objects depending on the JSON
+    in the body of the request.
+    """
+    req = request.get_json()
+
+    if req is None or all(req.get(key) is None
+                          for key in ['states', 'cities', 'amenities']):
+        obj_places = storage.all(Place)
+        return jsonify([obj.to_dict() for obj in obj_places.values()])
+
+    places = set()
+
+    if req.get('states'):
+        obj_states = [storage.get(State, state_id)
+                      for state_id in req.get('states')]
+        places.update(place for state in obj_states
+                      for city in state.cities for place in city.places)
+
+    if req.get('cities'):
+        obj_cities = [storage.get(City, city_id)
+                      for city_id in req.get('cities')]
+        places.update(place for city in obj_cities for place in city.places)
+
+    if not places:
+        places.update(storage.all(Place).values())
+
+    if req.get('amenities'):
+        obj_amenities = [storage.get(Amenity, amenity_id)
+                         for amenity_id in req.get('amenities')]
+        places = [place for place in places
+                  if set(obj_amenities).issubset(set(place.amenities))]
+
+    return jsonify([obj.to_dict() for obj in places])
