@@ -92,37 +92,46 @@ def update_place(place_id):
 
 @app_views.route('/places_search', methods=['POST'], strict_slashes=False)
 def places_search():
-    """
-    Retrieves all Place objects depending on the JSON
-    in the body of the request.
-    """
-    req = request.get_json(silent=True)
+    """Search for Place objects based on JSON in the request body"""
+    try:
+        request_json = request.get_json()
+    except Exception:
+        abort(400, 'Not a JSON')
 
-    if req is None or all(req.get(key) is None
-                          for key in ['states', 'cities', 'amenities']):
-        obj_places = storage.all(Place)
-        return jsonify([obj.to_dict() for obj in obj_places.values()])
+    if not request_json or not any(key in request_json
+                                   for key in ['states',
+                                               'cities', 'amenities']):
+        places = storage.all("Place").values()
+        return jsonify([place.to_dict() for place in places])
 
-    places = set()
+    states = request_json.get('states', [])
+    cities = request_json.get('cities', [])
+    amenities = request_json.get('amenities', [])
 
-    if req.get('states'):
-        obj_states = [storage.get(State, state_id)
-                      for state_id in req.get('states')]
-        places.update(place for state in obj_states
-                      for city in state.cities for place in city.places)
+    if not all(isinstance(lst, list) for lst in [states, cities, amenities]):
+        abort(400, 'Invalid JSON format')
 
-    if req.get('cities'):
-        obj_cities = [storage.get(City, city_id)
-                      for city_id in req.get('cities')]
-        places.update(place for city in obj_cities for place in city.places)
+    places_result = set()
 
-    if not places:
-        places.update(storage.all(Place).values())
+    for state_id in states:
+        state = storage.get("State", state_id)
+        if state:
+            places_result.update(state.places)
 
-    if req.get('amenities'):
-        obj_amenities = [storage.get(Amenity, amenity_id)
-                         for amenity_id in req.get('amenities')]
-        places = [place for place in places
-                  if set(obj_amenities).issubset(set(place.amenities))]
+    for city_id in cities:
+        city = storage.get("City", city_id)
+        if city:
+            places_result.update(city.places)
 
-    return jsonify([obj.to_dict() for obj in places])
+    if not states and not cities:
+        places_result.update(storage.all("Place").values())
+
+    if amenities:
+        filtered_places = []
+        for place in places_result:
+            place_amenities = {amenity.id for amenity in place.amenities}
+            if set(amenities).issubset(place_amenities):
+                filtered_places.append(place)
+        places_result = filtered_places
+
+    return jsonify([place.to_dict() for place in places_result])
