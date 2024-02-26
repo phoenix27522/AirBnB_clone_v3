@@ -96,7 +96,7 @@ def places_search():
     Retrieves all Place objects depending on the JSON
     in the body of the request.
     """
-    req = request.get_json(silent=True)
+    req = request.get_json()
 
     if req is None or all(req.get(key) is None
                           for key in ['states', 'cities', 'amenities']):
