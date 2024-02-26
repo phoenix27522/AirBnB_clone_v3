@@ -14,6 +14,7 @@ from models.user import User
 import json
 from os import getenv
 
+
 @app_views.route('/cities/<city_id>/places',
                  methods=['GET'], strict_slashes=False)
 def get_places(city_id):
